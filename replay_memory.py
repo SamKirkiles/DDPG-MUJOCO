@@ -5,17 +5,18 @@ import random
 
 class Memory:
 
-	def __init__(self,replay_size=800000,state_size=None,batch_size=32):
+	def __init__(self,replay_size=800000,action_size=None,state_size=None,batch_size=32):
 
 		self.buffer = 4
 		self.batch_size=batch_size
 		self.replay_size = replay_size
 		self.state_size = state_size
+		self.action_size = action_size
 
 		self.states = np.empty((self.replay_size,self.state_size),dtype=np.uint8)
 		self.rewards = np.empty((self.replay_size),dtype=np.uint8)
 		self.terminal = np.empty((self.replay_size),dtype=np.bool)
-		self.actions = np.empty((self.replay_size),dtype=np.uint8)
+		self.actions = np.empty((self.replay_size,self.action_size),dtype=np.uint8)
 
 		self.state_buffer = np.empty((self.batch_size,self.state_size),dtype=np.uint8)
 		self.next_state_buffer = np.empty((self.batch_size,self.state_size),dtype=np.uint8)
@@ -41,17 +42,6 @@ class Memory:
 			self.filled = True
 
 
-	def _get_sequence(self,index):
-
-		if index >= self.buffer-1:
-			state = self.states[(index-self.buffer+1):(index + 1),...]
-		else:
-			# Clip so our index doesn't go our of bounds
-
-			indexes = [(index - i) % self.current for i in reversed(range(self.buffer))]
-			state = self.states[indexes,...]
-
-		return np.transpose(state,(1,2,0))
 
 	def sample(self):
 
@@ -72,8 +62,8 @@ class Memory:
 			if self.terminal[(index-self.buffer):index].any():
 				continue
 			
-			self.state_buffer[len(indexes)] = self._get_sequence(index)
-			self.next_state_buffer[len(indexes)] = self._get_sequence(index+1)
+			self.state_buffer[len(indexes)] = self.states[index]
+			self.next_state_buffer[len(indexes)] = self.states[index+1]
 			indexes.append(index)
 
 		action = self.actions[indexes]
