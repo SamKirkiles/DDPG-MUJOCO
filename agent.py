@@ -68,9 +68,13 @@ class DDPG():
 		
 		# Main Loop
 
+
+
 		for e in range(self.parameters['num_episodes']):
 
 			state = self.env.reset()
+
+			ep_reward = 0 
 
 			while True:
 
@@ -79,8 +83,9 @@ class DDPG():
 
 				self.memory.add(state,action[0],reward,done,next_state)
 				
-				self.env.render()
+				#self.env.render()
 
+				ep_reward += reward
 				
 				s_state, s_action, s_reward, s_next_state,s_terminal = self.memory.sample()
 
@@ -97,7 +102,11 @@ class DDPG():
 
 				sess.run(increment_global_step)
 					
+
 				if done:
+
+					reward_summary = tf.Summary(value=[tf.Summary.Value(tag="ep_rewards", simple_value=ep_reward)])
+					trainwriter.add_summary(reward_summary,e)
 
 					break
 

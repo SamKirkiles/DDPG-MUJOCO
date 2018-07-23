@@ -5,13 +5,14 @@ class Model():
 		self.scope = scope
 		self.state_size = state_size
 		self.action_size = action_size
-		self.model,self.loss_summary,self.optimize = self.build_model(lr)
+		self.lr = lr
+		self.model,self.loss_summary,self.optimize = self.build_model()
 		self.copy_model = copy_model
 		
 		if self.copy_model is not None:
 			self.copy_tensors = [tf.assign_add(ref=w1, value=(1-tau) * w2) for w1,w2 in zip(self.get_weights(),self.copy_model.get_weights())]
 
-	def build_model(self,lr):
+	def build_model(self):
 		pass
 
 	def get_weights(self):
@@ -30,7 +31,7 @@ class Critic(Model):
 		Model.__init__(self,scope=scope,action_size=action_size,state_size=state_size,tau=tau,lr=lr,copy_model=copy_model)
 		self.action_gradients = self.build_action_grads()
 
-	def build_model(self,lr):
+	def build_model(self):
 		with tf.variable_scope(self.scope):
 			self.input_placeholder = tf.placeholder(dtype=tf.float32,shape=(None,self.state_size),name="input_placeholder")
 			self.action_placeholder = tf.placeholder(dtype=tf.float32,shape=(None,self.action_size),name="action_placeholder")
@@ -46,7 +47,7 @@ class Critic(Model):
 			x = tf.layers.dense(inputs=x,units=1,kernel_initializer=tf.random_uniform_initializer(minval=-3e-3, maxval=3e-3))
 			loss = tf.losses.mean_squared_error(x,self.target_placeholer)
 			loss_summary = tf.summary.scalar('critic_loss',loss)
-			optimize = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss)
+			optimize = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss)
 
 			return tf.nn.tanh(x), loss_summary, optimize
 	
@@ -70,7 +71,7 @@ class Actor(Model):
 		Model.__init__(self,scope=scope,action_size=action_size,state_size=state_size,tau=tau,lr=lr,copy_model=copy_model)
 		self.optimize = self.build_grads()
 
-	def build_model(self,lr):
+	def build_model(self):
 		with tf.variable_scope(self.scope):
 			self.input_placeholder = tf.placeholder(dtype=tf.float32,shape=(None,self.state_size))
 			
@@ -89,7 +90,7 @@ class Actor(Model):
 		model_weights = self.get_weights()
 		model_grads = tf.gradients(self.model,model_weights,-self.action_grad_placeholder)
 		grads_weights = zip(model_grads,model_weights)
-		return tf.train.AdamOptimizer(learning_rate=0.0001).apply_gradients(grads_weights)
+		return tf.train.AdamOptimizer(learning_rate=self.lr).apply_gradients(grads_weights)
 
 	def update(self,sess,filewriter,states,action_grads):
 		sess.run(self.optimize,feed_dict={self.input_placeholder:states,self.action_grad_placeholder:action_grads})
