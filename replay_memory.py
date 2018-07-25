@@ -13,13 +13,13 @@ class Memory:
 		self.state_size = state_size
 		self.action_size = action_size
 
-		self.states = np.empty((self.replay_size,self.state_size),dtype=np.uint8)
-		self.rewards = np.empty((self.replay_size),dtype=np.uint8)
+		self.states = np.empty((self.replay_size,self.state_size),dtype=np.float32)
+		self.rewards = np.empty((self.replay_size),dtype=np.float32)
 		self.terminal = np.empty((self.replay_size),dtype=np.bool)
-		self.actions = np.empty((self.replay_size,self.action_size),dtype=np.uint8)
+		self.actions = np.empty((self.replay_size,self.action_size),dtype=np.float32)
 
-		self.state_buffer = np.empty((self.batch_size,self.state_size),dtype=np.uint8)
-		self.next_state_buffer = np.empty((self.batch_size,self.state_size),dtype=np.uint8)
+		self.state_buffer = np.empty((self.batch_size,self.state_size),dtype=np.float32)
+		self.next_state_buffer = np.empty((self.batch_size,self.state_size),dtype=np.float32)
 		
 		self.current = 0
 		self.filled = False

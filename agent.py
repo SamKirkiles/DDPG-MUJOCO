@@ -78,7 +78,7 @@ class DDPG():
 			while True:
 
 				action = self.actor.get_action(sess,state[None,...]) + action_noise()
-				action = np.clip(action,self.env.action_space.low[0],self.env.action_space.high[0])
+				#action = np.clip(action,self.env.action_space.low[0],self.env.action_space.high[0])
 				next_state, reward,done,_  = self.env.step(action)
 
 
@@ -90,7 +90,6 @@ class DDPG():
 				ep_reward += reward
 				
 				s_state, s_action, s_reward, s_next_state,s_terminal = self.memory.sample()
-
 
 				s_targets = s_reward + self.parameters['gamma'] * self.target_critic.get_target(sess,s_next_state,s_action)
 

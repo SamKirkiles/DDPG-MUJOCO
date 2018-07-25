@@ -10,7 +10,7 @@ class Model():
 		self.copy_model = copy_model
 		
 		if self.copy_model is not None:
-			self.copy_tensors = [tf.assign_add(ref=w1, value=(1-tau) * w2) for w1,w2 in zip(self.get_weights(),self.copy_model.get_weights())]
+			self.copy_tensors = [w1.assign(tf.multiply(w1,tau) + tf.multiply(w2,1-tau)) for w1,w2 in zip(self.get_weights(),self.copy_model.get_weights())]
 
 	def build_model(self):
 		pass
@@ -37,11 +37,11 @@ class Critic(Model):
 			self.action_placeholder = tf.placeholder(dtype=tf.float32,shape=(None,self.action_size),name="action_placeholder")
 			self.target_placeholer = tf.placeholder(dtype=tf.float32,shape=(None),name="target_placeholder")
 			
-			x = tf.layers.dense(inputs=self.input_placeholder,units=400)
+			x = tf.layers.dense(inputs=self.input_placeholder,units=400,kernel_initializer=tf.keras.initializers.he_normal())
 			x = tf.contrib.layers.layer_norm(inputs=x)
 			x = tf.nn.relu(x)
 			x = tf.concat([x,self.action_placeholder],axis=-1)
-			x = tf.layers.dense(inputs=x,units=300)
+			x = tf.layers.dense(inputs=x,units=300,kernel_initializer=tf.keras.initializers.he_normal())
 			x = tf.contrib.layers.layer_norm(inputs=x)
 			x = tf.nn.relu(x)
 			x = tf.layers.dense(inputs=x,units=1,kernel_initializer=tf.random_uniform_initializer(minval=-3e-3, maxval=3e-3))
@@ -75,10 +75,10 @@ class Actor(Model):
 		with tf.variable_scope(self.scope):
 			self.input_placeholder = tf.placeholder(dtype=tf.float32,shape=(None,self.state_size))
 			
-			x = tf.layers.dense(inputs=self.input_placeholder,units=400)
+			x = tf.layers.dense(inputs=self.input_placeholder,units=400,kernel_initializer=tf.keras.initializers.he_normal())
 			x = tf.contrib.layers.layer_norm(inputs=x)
 			x = tf.nn.relu(x)
-			x = tf.layers.dense(inputs=x,units=300)
+			x = tf.layers.dense(inputs=x,units=300,kernel_initializer=tf.keras.initializers.he_normal())
 			x = tf.contrib.layers.layer_norm(inputs=x)
 			x = tf.nn.relu(x)
 			x = tf.layers.dense(inputs=x,units=self.action_size,kernel_initializer=tf.random_uniform_initializer(minval=-3e-3, maxval=3e-3))
