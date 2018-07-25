@@ -69,7 +69,6 @@ class DDPG():
 		# Main Loop
 
 
-
 		for e in range(self.parameters['num_episodes']):
 
 			state = self.env.reset()
@@ -79,11 +78,14 @@ class DDPG():
 			while True:
 
 				action = self.actor.get_action(sess,state[None,...]) + action_noise()
-				next_state, reward,done,_  = self.env.step(self.env.action_space.sample())
+				action = np.clip(action,self.env.action_space.low[0],self.env.action_space.high[0])
+				next_state, reward,done,_  = self.env.step(action)
+
 
 				self.memory.add(state,action[0],reward,done,next_state)
 				
-				#self.env.render()
+				if self.parameters['render']:
+					self.env.render()
 
 				ep_reward += reward
 				
