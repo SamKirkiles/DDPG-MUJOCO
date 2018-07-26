@@ -25,7 +25,9 @@ class DDPG():
 		)
 
 		# Create actor and critic 
-		
+		# Replace this with 
+		# ac = ActorCritic()
+		# ActorCritic.update(batch)
 		self.actor = Actor(scope="actor",action_size=self.nA,state_size=self.state_size,tau=self.parameters['tau'],lr=self.parameters['actor_learning_rate'],copy_model=None)
 		self.critic = Critic(scope="critic",action_size=self.nA,state_size=self.state_size,tau=self.parameters['tau'],lr=self.parameters['critic_learning_rate'],copy_model=None)
 

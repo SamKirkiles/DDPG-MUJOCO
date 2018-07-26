@@ -6,7 +6,7 @@ class Model():
 		self.state_size = state_size
 		self.action_size = action_size
 		self.lr = lr
-		self.model,self.loss_summary,self.optimize = self.build_model()
+		self.model = self.build_model()
 		self.copy_model = copy_model
 		
 		if self.copy_model is not None:
@@ -30,12 +30,12 @@ class Critic(Model):
 	def __init__(self,scope,action_size,state_size,tau,lr=0.0001,copy_model=None):
 		Model.__init__(self,scope=scope,action_size=action_size,state_size=state_size,tau=tau,lr=lr,copy_model=copy_model)
 		self.action_gradients = self.build_action_grads()
+		self.optimize,self.loss_summary = self.build_optimizer()
 
-	def build_model(self):
+	def build_model(self,actions):
 		with tf.variable_scope(self.scope):
+
 			self.input_placeholder = tf.placeholder(dtype=tf.float32,shape=(None,self.state_size),name="input_placeholder")
-			self.action_placeholder = tf.placeholder(dtype=tf.float32,shape=(None,self.action_size),name="action_placeholder")
-			self.target_placeholer = tf.placeholder(dtype=tf.float32,shape=(None),name="target_placeholder")
 			
 			x = tf.layers.dense(inputs=self.input_placeholder,units=400,kernel_initializer=tf.keras.initializers.he_normal())
 			x = tf.contrib.layers.layer_norm(inputs=x)
@@ -45,12 +45,17 @@ class Critic(Model):
 			x = tf.contrib.layers.layer_norm(inputs=x)
 			x = tf.nn.relu(x)
 			x = tf.layers.dense(inputs=x,units=1,kernel_initializer=tf.random_uniform_initializer(minval=-3e-3, maxval=3e-3))
-			loss = tf.losses.mean_squared_error(x,self.target_placeholer)
-			loss_summary = tf.summary.scalar('critic_loss',loss)
-			optimize = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss)
 
-			return tf.nn.tanh(x), loss_summary, optimize
+			return tf.nn.tanh(x)
 	
+	def build_optimizer(self):
+		# Build optimization operations in tensorflow graph
+		self.target_placeholer = tf.placeholder(dtype=tf.float32,shape=(None),name="target_placeholder")
+		loss = tf.losses.mean_squared_error(self.model,self.target_placeholer)
+		loss_summary = tf.summary.scalar('critic_loss',loss)
+		optimize = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss)
+		return optimize,loss_summary
+
 	def build_action_grads(self):
 		return tf.gradients(self.model,self.action_placeholder)
 	
@@ -67,9 +72,11 @@ class Critic(Model):
 		
 class Actor(Model):
 
-	def __init__(self,scope,action_size,state_size,tau,lr=0.0001,copy_model=None):
+	def __init__(self,scope,action_size,state_size,tau,lr=0.0001,copy_model=None,critic=None):
 		Model.__init__(self,scope=scope,action_size=action_size,state_size=state_size,tau=tau,lr=lr,copy_model=copy_model)
 		self.optimize = self.build_grads()
+		# Trainable actor must have a reference to its critic for gradient updates
+		self.critic = critic
 
 	def build_model(self):
 		with tf.variable_scope(self.scope):
@@ -83,12 +90,13 @@ class Actor(Model):
 			x = tf.nn.relu(x)
 			x = tf.layers.dense(inputs=x,units=self.action_size,kernel_initializer=tf.random_uniform_initializer(minval=-3e-3, maxval=3e-3))
 			
-			return tf.nn.tanh(x),None,None
+			return tf.nn.tanh(x)
 
 	def build_grads(self):
 		self.action_grad_placeholder = tf.placeholder(dtype=tf.float32,shape=(None,self.action_size))
 		model_weights = self.get_weights()
-		model_grads = tf.gradients(self.model,model_weights,-self.action_grad_placeholder)
+		model_loss = -tf.reduce_mean(self.critic,)
+		model_grads = tf.gradients(model_loss,model_weights)
 		grads_weights = zip(model_grads,model_weights)
 		return tf.train.AdamOptimizer(learning_rate=self.lr).apply_gradients(grads_weights)
 
