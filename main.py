@@ -8,11 +8,14 @@ def main():
 		'gamma':0.99,
 		'tau':0.001,
 		'sigma':0.2,
-		'num_episodes':100000,
+		'num_epochs':5000,
+		'num_episodes':1000,
 		'replay_size':1000000,
+		'num_train_steps':50,
 		'replay_init_size':1000,
 		'batch_size':64,
-		'render':False,
+		'render_train':False,
+		'restore':False,
 		'env':'Hopper-v2'
 	}
 	

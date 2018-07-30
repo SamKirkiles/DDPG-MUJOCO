@@ -5,7 +5,7 @@ import random
 
 class Memory:
 
-	def __init__(self,replay_size=800000,action_size=None,state_size=None,batch_size=32):
+	def __init__(self,replay_size=None,action_size=None,state_size=None,batch_size=None):
 
 		self.buffer = 4
 		self.batch_size=batch_size
