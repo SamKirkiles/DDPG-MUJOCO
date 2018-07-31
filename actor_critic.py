@@ -98,7 +98,8 @@ class ActorCritic():
 
 	def pi(self,sess,state):
 		# Maps state to action
-		return sess.run(self.actor_model,feed_dict={self.state_placeholder:state})
+		action = sess.run(self.actor_model,feed_dict={self.state_placeholder:state})
+		return action.flatten()
 
 	def Q(self,sess,state,action):
 		return sess.run(self.critic_model,feed_dict={self.state_placeholder:state,self.action_placeholder:action})
@@ -108,7 +109,8 @@ class ActorCritic():
 		# Calculate update target from bellman equation 
 		target_next_action = sess.run(self.target_actor_model,feed_dict={self.state_placeholder:next_state_batch})
 		Q_next = sess.run(self.target_critic_model,feed_dict={self.state_placeholder:next_state_batch,self.action_placeholder:target_next_action})
-		targets = reward_batch + (1-done_batch) * self.gamma * Q_next[0]
+		
+		targets = reward_batch + (1-done_batch) * self.gamma * Q_next[...,0]
 
 		# Update critic
 		_,critic_loss = sess.run([self.critic_optimizer,self.critic_loss_summary],feed_dict={self.state_placeholder:state_batch,self.action_placeholder:action_batch,self.target_placeholder:targets[:,None]})

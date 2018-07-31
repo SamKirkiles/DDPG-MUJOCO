@@ -37,6 +37,7 @@ class DDPG():
 			tau=parameters['tau']
 		)
 
+
 	def train(self):	
 
 		config = tf.ConfigProto(allow_soft_placement=True,log_device_placement=False)
@@ -76,7 +77,7 @@ class DDPG():
 				state = self.env.reset()
 			else:
 				fill_amount += 1
-				self.memory.add(state,action[0],reward,done,next_state)
+				self.memory.add(state,action,reward,done,next_state)
 				state = next_state
 		
 		# Main Loop
@@ -99,6 +100,8 @@ class DDPG():
 					action += noise
 					action = np.clip(action,self.env.action_space.low[0],self.env.action_space.high[0])
 					
+					assert action.shape == self.env.action_space.shape
+					
 					"""
 					# UNCOMMENT TO PRINT ACTIONS
 					a0 = tf.Summary(value=[tf.Summary.Value(tag="action_0", simple_value=action[0,0])])
@@ -113,7 +116,7 @@ class DDPG():
 					next_state, reward,done,_  = self.env.step(action)
 
 
-					self.memory.add(state,action[0],reward,done,next_state)
+					self.memory.add(state,action,reward,done,next_state)
 					
 					if self.parameters['render_train']:
 						self.env.render()
@@ -155,3 +158,33 @@ class DDPG():
 			os.system('clear') 
 			print("Model saved in path: %s" % save_path + "\n" + table.table)
 
+	def test(self):
+		config = tf.ConfigProto(allow_soft_placement=True,log_device_placement=False)
+		config.gpu_options.allow_growth = True
+
+		saver = tf.train.Saver()
+		sess = tf.Session(config=config)
+
+		saver.restore(sess, tf.train.latest_checkpoint('./saves'))
+		
+
+		while True:
+			 
+			state = self.env.reset()
+
+			# Perform rollout
+			while True:
+				action = self.actor_critic.pi(sess,state[None,...])	
+				action = np.clip(action,self.env.action_space.low[0],self.env.action_space.high[0])
+
+				assert action.shape == self.env.action_space.shape
+				
+				next_state, reward,done,_  = self.env.step(action)
+				
+				self.env.render()
+				
+				if done:
+
+					break
+
+				state = next_state

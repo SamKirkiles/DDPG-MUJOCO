@@ -8,8 +8,8 @@ def main():
 		'gamma':0.99,
 		'tau':0.001,
 		'sigma':0.2,
-		'num_epochs':5000,
-		'num_episodes':1000,
+		'num_epochs':500,
+		'num_episodes':20,
 		'replay_size':1000000,
 		'num_train_steps':50,
 		'replay_init_size':1000,
@@ -20,7 +20,8 @@ def main():
 	}
 	
 	agent = DDPG(params)
-	agent.train()
+	#agent.train()
+	agent.test()
 
 if __name__ == "__main__":
 	main()
