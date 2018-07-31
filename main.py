@@ -16,7 +16,7 @@ def main():
 		'batch_size':64,
 		'render_train':False,
 		'restore':False,
-		'env':'Hopper-v2'
+		'env':'HalfCheetah-v2'
 	}
 	
 	agent = DDPG(params)
